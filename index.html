@@ -422,6 +422,25 @@
     showPassScreen();
   });
 
+  // ====== 自動更新 ======
+  // カードを開いている間は定期的に最新を取りにいき、増えていたらその場でポン！が出る。
+  // タブに戻ってきた瞬間にも更新する。失敗時は何もしない（表示中のカードを保つ）。
+  var REFRESH_MS = 25000;
+  var refreshing = false;
+  function refreshCard() {
+    if (!currentPass || refreshing || document.hidden) return;
+    if (document.getElementById('cardBody').style.display === 'none') return; // 読み込み中・エラー中は触らない
+    refreshing = true;
+    fetchCard(currentPass).then(function (data) {
+      refreshing = false;
+      if (data && data.ok) renderCard(data);
+    }).catch(function () { refreshing = false; });
+  }
+  setInterval(refreshCard, REFRESH_MS);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) refreshCard();
+  });
+
   // ====== 起動 ======
   var startPass = urlPass || savedPass;
   if (startPass) openCard(startPass);
